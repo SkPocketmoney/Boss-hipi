@@ -1,35 +1,151 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Random Number Generator</title>
-  <script>
-    window.onload = function() {
-      generateRandomNumber();
-    };
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fetch Username and Open Links</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
 
-    function generateRandomNumber() {
-      var randomNumber = Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000;
-      document.getElementById("randomNumber").innerHTML = "Random Number: " + randomNumber;
-      
-      // Open new tab with the same number after a delay of 3 seconds
-      setTimeout(function(){
-        var newTab = window.open("about:blank");
-        newTab.document.write("<h1>" + randomNumber + "</h1>");
-        
-        // Automatically copy the code to clipboard in the new tab's context
-        newTab.onload = function() {
-          newTab.navigator.clipboard.writeText(randomNumber);
-        };
-        
-        // Close the new tab after 5 seconds
-        setTimeout(function(){
-          newTab.close();
-        }, 5000);
-      }, 3000);
-    }
-  </script>
+        button {
+            margin: 5px;
+            padding: 80px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #otpDisplay {
+            margin-top: 20px;
+            padding: 70px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            font-size: 16px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        #otpDisplay:hover {
+            background-color: #e0e0e0;
+        }
+    </style>
 </head>
 <body>
-  <p id="randomNumber"></p>
+    <button id="openLinkBtn">Open Links</button>
+    <button onclick="openLink1()">ID 1</button>
+    <br>
+    <button onclick="openLink2()">ID 2</button>
+    <div id="otpDisplay"></div>
+
+    <script>
+        function openLink1() {
+            window.location.href = "https://www.hipi.co.in/@onlybeauty_girl";
+        }
+
+        function openLink2() {
+            window.location.href = "https://www.hipi.co.in/@mhindi445";
+        }
+
+        document.getElementById('openLinkBtn').addEventListener('click', function() {
+            fetch('https://www.1secmail.com/api/v1/?action=genRandomMailbox&count=1')
+                .then(response => response.json())
+                .then(data => {
+                    const email = data[0];
+                    const [username, domain] = email.split('@');
+
+                    const registrationLink = `https://www.hipi.co.in/registration?email=${encodeURIComponent(email)}`;
+                    const inboxLink = `https://www.1secmail.com/api/v1/?action=getMessages&login=${encodeURIComponent(username)}&domain=${encodeURIComponent(domain)}`;
+
+                    // Open registration link in a new tab
+                    window.open(registrationLink, '_blank');
+
+                    let lastOtp = null;
+
+                    // Function to fetch inbox data and display OTP
+                    function fetchInboxData() {
+                        fetch(inboxLink)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.length > 0) {
+                                    const latestMessage = data[0];
+                                    const otpMatch = latestMessage.subject.match(/\d{4}/);
+                                    if (otpMatch) {
+                                        const otp = otpMatch[0];
+
+                                        if (otp !== lastOtp) {
+                                            lastOtp = otp;
+
+                                            // Open a new tab to display the OTP
+                                            const otpTab = window.open('', '_blank');
+                                            otpTab.document.write(`
+                                                <html>
+                                                <head>
+                                                    <title>OTP</title>
+                                                    <style>
+                                                        body {
+                                                            display: flex;
+                                                            justify-content: center;
+                                                            align-items: center;
+                                                            height: 100vh;
+                                                            font-family: Arial, sans-serif;
+                                                            background-color: #f0f0f0;
+                                                        }
+                                                        .otp {
+                                                            font-size: 48px;
+                                                            padding: 20px;
+                                                            background-color: #fff;
+                                                            border: 1px solid #ccc;
+                                                            border-radius: 10px;
+                                                        }
+                                                    </style>
+                                                </head>
+                                                <body>
+                                                    <div class="otp">OTP: ${otp}</div>
+                                                </body>
+                                                </html>
+                                            `);
+
+                                            // Automatically copy OTP to clipboard
+                                            navigator.clipboard.writeText(otp)
+                                                .then(() => {
+                                                    console.log('OTP copied to clipboard');
+                                                })
+                                                .catch(error => {
+                                                    console.error('Error copying OTP:', error);
+                                                });
+
+                                            // Close the tab after 5 seconds
+                                            setTimeout(() => {
+                                                otpTab.close();
+                                            }, 5000);
+                                        }
+                                    }
+                                }
+                            })
+                            .catch(error => console.error('Error fetching inbox data:', error));
+                    }
+
+                    // Fetch inbox data initially
+                    fetchInboxData();
+
+                    // Fetch inbox data every second
+                    const fetchInterval = setInterval(fetchInboxData, 1000);
+
+                    // Stop fetching inbox data after 5 minutes
+                    setTimeout(() => {
+                        clearInterval(fetchInterval);
+                    }, 300000); // 5 minutes
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        });
+    </script>
 </body>
 </html>
